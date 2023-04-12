@@ -13,14 +13,12 @@ namespace crypt5
 {
     class RSA
     {
-        public EDecimal pubKey = 0;
-        public EDecimal privKey = 0;       
-        
-        
+        public BigInteger pubKey = 0;
+        public BigInteger privKey = 0;       
 
-        private EInteger q, p, n, phi = 0;
+        private BigInteger q, p, n, phi = 0;
         private const int tokenSize = 8;
-        private EContext ec;
+        //private EContext ec;
         public RSA()
         {
             GenPrime gp = new GenPrime();
@@ -29,22 +27,18 @@ namespace crypt5
             q = 17; p = 19;
             n = q * p;
             phi = (q - 1) * (p - 1);
-            RSACryptoServiceProvider rp = new RSACryptoServiceProvider();
-            EInteger e = 2;
+            //RSACryptoServiceProvider rp = new RSACryptoServiceProvider();
+            BigInteger e = 2;
             while (e < phi)
             {
-                if (GreatCommDiv(e, phi) == EInteger.One)
+                if (BigInteger.GreatestCommonDivisor(e, phi) == 1)
                     break;
                 else
                     e++;
             }
 
-            pubKey = EDecimal.FromEInteger(e);
-            int k = 2;
-            EDecimal a = (EDecimal.FromEInteger((phi * k - 1)));
-            EDecimal b = EDecimal.FromEInteger(e);
-            ec = new EContext(1100, ERounding.HalfDown, 0, 1100, false);
-            privKey = (EDecimal.FromEInteger((phi + 1))).Divide(EDecimal.FromEInteger(e), ec);
+            pubKey = e;
+            privKey = FindD(e, phi);
             
         }
 
@@ -61,40 +55,39 @@ namespace crypt5
             }
         }
 
-        // ---------- ENCRYPTION ---------- //
-        public string Encrypt(string message, EDecimal publicKey)
+        private BigInteger FindD(BigInteger e, BigInteger phi)
         {
-            EInteger pbk = 
-            Debug.WriteLine(BigInteger.ModPow(10, 2, 110).ToString());
-            BigInteger n1 = 2;
-            BigInteger enc = BigInteger.ModPow(n1, pbk, n);
-            Debug.WriteLine(enc.ToString());
-            BigInteger dec = BigInteger.ModPow(enc, prk, n);
-            Debug.WriteLine(dec.ToString());
-            Debug.WriteLine((pubKey * privKey % phi).ToString());
+            /*            BigInteger i = 1;
+                        while (e * i < phi) i++;
+                        BigInteger step = i;
+                        BigInteger de = e * i;
+                        while (de % phi != 1)
+                        {
+                            Debug.WriteLine(i.ToString());
+                            i = i+step-e;
+                            de = e * i;
+                            if (de % phi == 1) break;
+                            else i++;
+                        }
+                        return de/e;*/
+            BigInteger d = 1;
+            while (e * d % phi != 1) d++;
+            return d;
+        }
 
-
+        // ---------- ENCRYPTION ---------- //
+        public string Encrypt(string message, BigInteger publicKey)
+        {
             string encryptedText = "";
             byte[] msgbytes = Encoding.UTF8.GetBytes(message);
+            BigInteger numToken = 0; BigInteger value = 0;
             for (int i = 0; i < msgbytes.Length; i++)
             {
-                //string token = getToken(message, i);
-                //i += tokenSize - 1;
-
-                EInteger numToken = EInteger.FromByte(msgbytes[i]);
-                //for (int j = 0; j < token.Length; j++)
-                //    numToken = EInteger.FromString(numToken.ToString() + (Convert.ToInt32(token[j])).ToString());
-
-                EInteger value = ModPow(numToken, publicKey, n);
+                numToken = msgbytes[i];
+                value = BigInteger.ModPow(numToken, publicKey, n);
                 encryptedText += value + " ";
             }
-            /*            BigInteger numToken = 0;
-                        for (int i = 0; i < message.Length; i++)
-                        {
-                            numToken = BigInteger.Parse(numToken.ToString() + (Convert.ToInt32(message[i])).ToString());
-                        }
-                        BigInteger value = BigInteger.ModPow(numToken, publicKey, n);
-                        encryptedText += value.ToString() + " ";*/
+
             return encryptedText;
         }
 
@@ -113,28 +106,29 @@ namespace crypt5
         // -------------------- //
 
         // ---------- DECRYPTION ---------- //
-        public string Decrypt(string message, EDecimal privateKey)
+        public string Decrypt(string message, BigInteger privateKey)
         {
             string decryptedText = "";
             string[] tokens = message.Split(' ');
-            byte[] bytes = new byte[] { };
+            List<byte> bytes = new List<byte> { };
+            BigInteger value = 0;
             for (int i = 0; i < tokens.Length-1; i++)
             {
-                
-                EInteger value = ModPow(EDecimal.FromString(tokens[i]), privateKey, n);
-                bytes.Append(value.ToByteChecked());
+                value = BigInteger.ModPow(BigInteger.Parse(tokens[i]), privateKey, n);
+                bytes.Add(Convert.ToByte(value.ToString()));
             }
-            decryptedText = Encoding.UTF8.GetString(bytes);
+
+            decryptedText = Encoding.UTF8.GetString(bytes.ToArray());
             return decryptedText;
         }
         // -------------------- //
 
-        private EInteger ModPow(EDecimal value, EDecimal exponent, EInteger modulus)
+/*        private EInteger ModPow(EDecimal value, EDecimal exponent, EInteger modulus)
         {
             EInteger result = (value.Pow(exponent, ec)).ToEInteger().Mod(modulus);
             EDecimal res1 = (value.Pow(exponent, ec));
             EInteger res2 = res1.ToEInteger().Mod(modulus);
             return result;
-        }
+        }*/
     }
 }

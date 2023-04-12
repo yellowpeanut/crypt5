@@ -59,7 +59,7 @@ namespace crypt5
             string compressedFile = rsa.Encrypt(fileContent, rsa.pubKey);
             richTextBox4.Text = compressedFile;
             File.WriteAllText("2.txt", compressedFile);
-            label5.Text = $"Compressed size: {getFileSize(compressedFile, 2)} bytes";
+            label5.Text = $"Encrypted file size: {getFileSize(compressedFile, 4)} bytes";
 
 /*            string text = "";
             foreach (var symb in ari.SymbolsFrequency)
@@ -75,13 +75,14 @@ namespace crypt5
             string compressedFile = File.ReadAllText("2.txt");
             if (compressedFile == String.Empty)
             {
-                MessageBox.Show("Compressed file is empty!", "Error",
+                MessageBox.Show("Encrypted file is empty!", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             string decompressedFile = rsa.Decrypt(compressedFile, rsa.privKey);
             File.WriteAllText("3.txt", decompressedFile);
             richTextBox2.Text = decompressedFile;
+            label6.Text = $"Decrypted file size: {getFileSize(decompressedFile, 8)} bytes";
             //label6.Text = $"Decompressed size: {getFileSize(decompressedFile, ari.bitsPerSymbol)} bytes";
         }
 
